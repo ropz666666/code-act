@@ -12,6 +12,10 @@ class OpenAILMAgent(LMAgent):
     def __init__(self, config):
         super().__init__(config)
         assert "model_name" in config.keys()
+        if "openai.api_key" in config:
+            openai.api_key = config["openai.api_key"]
+        if "openai.api_base" in config:
+            openai.api_base = config["openai.api_base"]
 
     @backoff.on_exception(
         backoff.fibo,
@@ -39,7 +43,14 @@ class OpenAILMAgent(LMAgent):
         messages = state.history
         try:
             lm_output, token_usage = self.call_lm(messages)
-            for usage_type, count in token_usage.items():
+            tu = token_usage
+            if hasattr(tu, "to_dict"):
+                tu = tu.to_dict()
+            for usage_type, count in tu.items():
+                try:
+                    count = int(count)
+                except Exception:
+                    continue
                 state.token_counter[usage_type] += count
             action = self.lm_output_to_action(lm_output)
             return action

@@ -1,0 +1,10 @@
+Task:
+Given a natural requirement about Spotify Web API, select the minimal ordered list of endpoints to fulfill it.
+Output format requirement: Return a JSON array of strings inside <solution>, e.g., <solution> ["GET /search", "GET /artists/{id}/albums"] </solution>.
+
+Assistant:
+<thought>Identify intent and map to endpoints. I can optionally verify schema by calling the tool.</thought>
+<execute>
+print(spotify_api("GET /search", params={"q": "Taylor Swift", "type": "artist"})[:200])
+</execute>
+The endpoints are <solution> ["GET /search", "GET /artists/{id}/albums"] </solution>

@@ -1,15 +1,16 @@
-from mint.envs import GeneralEnv, AlfworldEnv
+from mint.envs import GeneralEnv
 from mint.datatypes import Action, State
-from mint.tasks import AlfWorldTask
 from mint.tools import Tool
 import mint.tasks as tasks
 import mint.agents as agents
 import logging
+import time
 import os
 import json
 import pathlib
 import importlib
 import argparse
+import yaml
 from typing import List, Dict, Any
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
@@ -30,9 +31,19 @@ def interactive_loop(
     env_config: Dict[str, Any],
     interactive_mode: bool = False,
 ):
-    if isinstance(task, AlfWorldTask):
-        LOGGER.info("loading Alfworld Env")
-        env = AlfworldEnv(task, tools, feedback_config, env_config)
+    t0 = time.time()
+    try:
+        from mint.tasks import AlfWorldTask
+        is_alf = isinstance(task, AlfWorldTask)
+    except Exception:
+        is_alf = False
+    if is_alf:
+        try:
+            from mint.envs import AlfworldEnv
+            LOGGER.info("loading Alfworld Env")
+            env = AlfworldEnv(task, tools, feedback_config, env_config)
+        except Exception:
+            env = GeneralEnv(task, tools, feedback_config, env_config)
     else:
         env = GeneralEnv(task, tools, feedback_config, env_config)
     state: State = env.reset()
@@ -100,6 +111,7 @@ def interactive_loop(
     LOGGER.info(
         f"Task finished in {num_steps} steps. Success: {state.success}"
     )
+    state.latest_output["duration_sec"] = round(time.time() - t0, 3)
 
     return state
 
@@ -123,6 +135,18 @@ def main(args: argparse.Namespace):
 
     # initialize the agent
     agent_config: Dict[str, Any] = exp_config["agent"]
+    # inject secrets from ./config.yaml at runtime without logging
+    try:
+        with open("./config.yaml", "r", encoding="utf-8") as cf:
+            cfg = yaml.safe_load(cf) or {}
+        api = cfg.get("API Key", {})
+        openai_key = api.get("openai") if isinstance(api, dict) else None
+        if openai_key:
+            agent_config["config"]["openai.api_key"] = openai_key
+            if "feedback" in exp_config and "feedback_agent_config" in exp_config["feedback"]:
+                exp_config["feedback"]["feedback_agent_config"]["openai.api_key"] = openai_key
+    except Exception:
+        pass
     agent: agents.LMAgent = getattr(agents, agent_config["agent_class"])(
         agent_config["config"]
     )
@@ -205,7 +229,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--exp_config",
         type=str,
-        default="./configs/gpt-3.5-turbo-0613/F=gpt-3.5-turbo-16k-0613/PHF=GT-textual/max5_p2+tool+cd/reasoning/scienceqa.json",
+        default="./configs/gpt-4o/F=gpt-4o/PHF=GT-textual/max5_p2+tool+cd/reasoning/scienceqa.json",
         help="Config of experiment.",
     )
     parser.add_argument(

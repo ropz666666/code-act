@@ -112,7 +112,7 @@ TASK_INFO_MAP = {
 FEEDBACK_CONFIG = {
     "feedback_agent_config": {
         "chat_mode": True,
-        "max_tokens": 1024,
+        "max_tokens": 4096,
         "temperature": 0.0,
         "stop": ["\nQ:"],
     }
@@ -122,18 +122,18 @@ EVALUATED_MODEL_LIST = [
     {
         "agent_class": "OpenAILMAgent",
         "config": {
-            "model_name": "gpt-3.5-turbo-0613",
+            "model_name": "gpt-4o",
             "chat_mode": True,
-            "max_tokens": 512,
+            "max_tokens":4096,
             "temperature": 0.0,
         },
     },
     {
         "agent_class": "OpenAILMAgent",
         "config": {
-            "model_name": "gpt-3.5-turbo-16k-0613",
+            "model_name": "gpt-4o",
             "chat_mode": True,
-            "max_tokens": 1024,
+            "max_tokens": 4096,
             "temperature": 0.0,
         },
     },
@@ -194,9 +194,9 @@ ENV_CONFIGS = [
     #     "count_down": True,
     # },
     {
-        "max_steps": 5,
+        "max_steps": 15,
         "use_tools": True,
-        "max_propose_solution": 2,
+        "max_propose_solution": 10,
         "count_down": True,
     }
 ]

@@ -1,0 +1,9 @@
+API Key:
+  openai: "sk-eUXrnuOoH3cZQwVyD21b886e583745F09e2b95AaD7C611D3"
+  deepseek: "sk-7f3baf18d09f4d928ffb28a89358cabd"
+  tmdb: "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlNTZmZjE3NWM2ZmFjNmYxY2M2NTY2MTgyNTk3YzY1ZiIsIm5iZiI6MTc2NTI2MjcwMS4yNDg5OTk4LCJzdWIiOiI2OTM3YzU2ZDAyNmIyNjk2YzNlYjFhOTMiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.2nuh6a9bOGOEBVbajCj88Qz9cu8u-7jHxYKtbslh-Uk"
+  spotipy_client_id: "bc88980f1ff841f2b47aac85ce88f61a"
+  spotipy_client_secret: "a6c3e3fca21945ed9929e8d1c1ddf49d"
+  spotipy_redirect_uri: "http://127.0.0.1:8000/callback"
+  lastfm: "d214ed9df84f601f4bf300a9396f38d1"
+  base_url: "https://api.rcouyi.com/v1"

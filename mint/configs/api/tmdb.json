@@ -1,0 +1,37 @@
+{
+  "feedback_config": {
+    "pseudo_human_feedback": "GT",
+    "feedback_form": "binary",
+    "feedback_agent_config": {
+      "agent_class": "OpenAIFeedbackAgent",
+      "model_name": "gpt-4o",
+      "max_tokens": 4096,
+      "temperature": 0,
+      "openai.api_base": "https://api.rcouyi.com/v1"
+    }
+  },
+  "env_config": {
+    "use_tools": true,
+    "max_steps": 10,
+    "max_propose_solution": 5,
+    "count_down": true
+  },
+  "task": {
+    "task_class": "APISpecTaskTMDB",
+    "filepath": "./experiment/datasets/tmdb.json",
+    "tool_imports": [["mint.tools.apispec_tool", "TMDBAPITool"]],
+    "extra_load_task_kwargs": {
+      "limit": 50
+    }
+  },
+  "agent": {
+    "agent_class": "OpenAILMAgent",
+    "config": {
+      "model_name": "gpt-4o",
+      "max_tokens": 4096,
+      "temperature": 0,
+      "openai.api_base": "https://api.rcouyi.com/v1"
+    }
+  },
+  "output_dir": "./experiment/result/tmdb_mint"
+}

@@ -2,6 +2,8 @@ from typing import Mapping
 from mint.tools.base import Tool
 import re
 import signal
+import sys
+import threading
 from contextlib import contextmanager
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.utils import io
@@ -27,15 +29,20 @@ class PythonREPL(Tool):
 
     @contextmanager
     def time_limit(self, seconds):
-        def signal_handler(signum, frame):
-            raise TimeoutError(f"Timed out after {seconds} seconds.")
+        if hasattr(signal, "SIGALRM"):
+            def signal_handler(signum, frame):
+                raise TimeoutError(f"Timed out after {seconds} seconds.")
 
-        signal.signal(signal.SIGALRM, signal_handler)
-        signal.alarm(seconds)
-        try:
+            signal.signal(signal.SIGALRM, signal_handler)
+            signal.alarm(seconds)
+            try:
+                yield
+            finally:
+                signal.alarm(0)
+        else:
+            # Windows fallback: SIGALRM is unavailable; use a no-op context.
+            # Timeout will be enforced in __call__ via a worker thread.
             yield
-        finally:
-            signal.alarm(0)  # Disable the alarm
 
     def reset(self) -> None:
         InteractiveShell.clear_instance()
@@ -48,29 +55,51 @@ class PythonREPL(Tool):
 
     def __call__(self, query: str) -> str:
         """Use the tool and return observation"""
-        with self.time_limit(self.timeout):
-            # NOTE: The timeout error will be caught by the InteractiveShell
+        if hasattr(signal, "SIGALRM"):
+            with self.time_limit(self.timeout):
+                with io.capture_output() as captured:
+                    _ = self.shell.run_cell(query, store_history=True)
+                output = captured.stdout
+        else:
+            output_container = {"output": None, "error": None}
 
-            # Capture all output
-            with io.capture_output() as captured:
-                _ = self.shell.run_cell(query, store_history=True)
-            output = captured.stdout
+            def worker():
+                try:
+                    with io.capture_output() as captured:
+                        _ = self.shell.run_cell(query, store_history=True)
+                    output_container["output"] = captured.stdout
+                except Exception as e:
+                    output_container["error"] = e
 
-            if output == "":
-                output = "[Executed Successfully with No Output]"
+            t = threading.Thread(target=worker, daemon=True)
+            t.start()
+            t.join(self.timeout)
+            if t.is_alive():
+                raise TimeoutError(f"Timed out after {self.timeout} seconds.")
+            if output_container["error"] is not None:
+                output = str(output_container["error"])
+            else:
+                output = output_container["output"] or ""
 
-            # replace potentially sensitive filepath
-            # e.g., File /mint/mint/tools/python_tool.py:30, in PythonREPL.time_limit.<locals>.signal_handler(signum, frame)
-            # with File <filepath>:30, in PythonREPL.time_limit.<locals>.signal_handler(signum, frame)
-            # use re
-            output = re.sub(
-                # r"File (/mint/)mint/tools/python_tool.py:(\d+)",
-                r"File (.*)mint/tools/python_tool.py:(\d+)",
-                r"File <hidden_filepath>:\1",
-                output,
-            )
-            if len(output) > 2000:
-                output = output[:2000] + "...\n[Output Truncated]"
+        if output == "":
+            output = "[Executed Successfully with No Output]"
+
+        # Normalize IPython Out[...] display to raw content for easier parsing
+        trimmed = output.strip()
+        m = re.match(r"Out\[\d+\]:\s*(.*)", trimmed, re.DOTALL)
+        if m:
+            trimmed = m.group(1)
+            if (trimmed.startswith("'") and trimmed.endswith("'")) or (trimmed.startswith('"') and trimmed.endswith('"')):
+                trimmed = trimmed[1:-1]
+            output = trimmed
+
+        output = re.sub(
+            r"File (.*)mint/tools/python_tool.py:(\d+)",
+            r"File <hidden_filepath>:\1",
+            output,
+        )
+        if len(output) > 2000:
+            output = output[:2000] + "...\n[Output Truncated]"
 
         return output
 

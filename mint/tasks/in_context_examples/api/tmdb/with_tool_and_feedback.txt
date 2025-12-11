@@ -1,0 +1,13 @@
+Task:
+Given a natural requirement about TMDB API, call the minimal endpoints and return the actual API response data as the final answer.
+Output format requirement: Return the data inside <solution>, e.g., <solution> {"total_results": 1, ...} </solution> or <solution> 42 </solution>.
+
+Assistant:
+<thought>Identify intent, call TMDB, and output the actual data.</thought>
+<execute>
+print(tmdb_api("GET /search/movie", params={"query": "The Matrix"})[:200])
+</execute>
+<solution> {"sample": "...actual data from TMDB..."} </solution>
+
+Expert feedback:
+This is GOOD. The API data is retrieved correctly.

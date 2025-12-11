@@ -1,8 +1,25 @@
 from .base import LMAgent
 from .openai_lm_agent import OpenAILMAgent
-from .bard_agent import BardLMAgent
 from .openai_feedback_agent import OpenAIFeedbackAgent
-from .claude_feedback_agent import ClaudeFeedbackAgent
-from .vllm_feedback_agent import VLLMFeedbackAgent
-from .vllm_agent import VLLMAgent
-from .claude_agent import ClaudeLMAgent
+
+# Optional agents; import lazily to avoid hard deps
+try:
+    from .vllm_agent import VLLMAgent
+except Exception:
+    pass
+try:
+    from .vllm_feedback_agent import VLLMFeedbackAgent
+except Exception:
+    pass
+try:
+    from .claude_agent import ClaudeLMAgent
+except Exception:
+    pass
+try:
+    from .claude_feedback_agent import ClaudeFeedbackAgent
+except Exception:
+    pass
+try:
+    from .bard_agent import BardLMAgent
+except Exception:
+    pass
