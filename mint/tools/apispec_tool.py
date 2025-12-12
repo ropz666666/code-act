@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional
 from mint.tools.base import Tool
 
 
-def _truncate(s: str, n: int = 2000) -> str:
+def _truncate(s: str, n: int = 2000000) -> str:
     if len(s) > n:
         return s[:n] + "\n[Output Truncated]"
     return s
@@ -90,7 +90,12 @@ class APISpecToolBase(Tool):
 
             req = urllib.request.Request(url, data=data, headers=headers, method=method)
             with urllib.request.urlopen(req, timeout=15) as resp:
-                content = resp.read().decode("utf-8", errors="ignore")
+                raw = resp.read().decode("utf-8", errors="ignore")
+                try:
+                    obj = json.loads(raw)
+                    content = json.dumps(obj, separators=(",", ":"))
+                except Exception:
+                    content = raw
                 out = _truncate(_sanitize(content))
                 print(f"[api_tool] status: {resp.status}")
                 return out

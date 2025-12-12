@@ -724,17 +724,5 @@
             "GET /search/movie",
             "GET /movie/{movie_id}/images"
         ]
-    },
-    {
-      "query": "给出 Walt Disney 的 logo 图片",
-      "solution": ["GET /search/company", "GET /company/{company_id}/images"]
-    },
-    {
-      "query": "给我 Star Wars 系列的图片",
-      "solution": ["GET /search/collection", "GET /collection/{collection_id}/images"]
-    },
-    {
-      "query": "Sofia Coppola 导演了多少部电影",
-      "solution": ["GET /search/person", "GET /person/{person_id}/movie_credits"]
     }
 ]

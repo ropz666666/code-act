@@ -98,8 +98,8 @@ class PythonREPL(Tool):
             r"File <hidden_filepath>:\1",
             output,
         )
-        if len(output) > 2000:
-            output = output[:2000] + "...\n[Output Truncated]"
+        # Do not truncate output; return full content for downstream parsing
+        # Large outputs are allowed to ensure JSON payloads remain intact
 
         return output
 
