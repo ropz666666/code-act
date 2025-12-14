@@ -187,26 +187,38 @@ def main(args: argparse.Namespace):
         LOGGER.info("All tasks done. Exiting.")
         return
 
+    # determine start index and task count from args or config
+    run_cfg = exp_config.get("run", {})
+    start_index = getattr(args, "start_index", None)
+    task_count = getattr(args, "task_count", None)
+    if start_index is None:
+        start_index = run_cfg.get("start_index", 0)
+    if task_count is None:
+        task_count = run_cfg.get("task_count", None)
+
     # run the loop for all tasks
     LOGGER.info(f"Running interactive loop for {n_tasks} tasks.")
     n_tasks_remain = n_tasks - len(done_task_id)  # only run the remaining tasks
     LOGGER.info(f"Running for remaining {n_tasks_remain} tasks. (completed={len(done_task_id)})")
 
-    if args.n_max_tasks is not None:
-        n_tasks_remain = min(n_tasks_remain, args.n_max_tasks - len(done_task_id))
-        LOGGER.info(f"Running for remaining {n_tasks_remain} tasks due to command line arg n_max_tasks. (n_max_tasks={args.n_max_tasks}, completed={len(done_task_id)})")
+    # Backward compatibility with n_max_tasks; prefer task_count if provided
+    if task_count is None and args.n_max_tasks is not None:
+        task_count = max(0, args.n_max_tasks - len(done_task_id))
+        LOGGER.info(f"Limiting run to task_count={task_count} due to n_max_tasks.")
 
     with open(output_path, "a") as f, logging_redirect_tqdm():
-        pbar = tqdm(total=n_tasks_remain)
+        total = task_count if task_count is not None else n_tasks_remain
+        pbar = tqdm(total=total)
+        run_count = 0
         for i, task in enumerate(todo_tasks):
-            # # Only test 10 tasks in debug mode
-            # if args.debug and i == 3:
-            #     break
-            if i >= n_tasks_remain + len(done_task_id):
-                LOGGER.info(f"Finished {n_tasks_remain} tasks. Exiting.")
+            # honor start_index offset
+            if i < start_index:
+                continue
+            if task_count is not None and run_count >= task_count:
+                LOGGER.info(f"Reached task_count={task_count}. Exiting.")
                 break
 
-            # skip done tasks
+            # skip done tasks to avoid duplicate entries
             if task.task_id in done_task_id:
                 continue
 
@@ -219,7 +231,8 @@ def main(args: argparse.Namespace):
                 json.dumps({"state": state.to_dict(),
                            "task": task.to_dict()}) + "\n"
             )
-            f.flush()  # make sure the output is written to file
+            f.flush()  # ensure append without overwrite
+            run_count += 1
             pbar.update(1)
         pbar.close()
 
@@ -241,6 +254,16 @@ if __name__ == "__main__":
         "--n_max_tasks",
         type=int,
         help="Number of tasks to run. If not specified, run all tasks.",
+    )
+    parser.add_argument(
+        "--start_index",
+        type=int,
+        help="Start index in the dataset (0-based).",
+    )
+    parser.add_argument(
+        "--task_count",
+        type=int,
+        help="Number of tasks to run starting from start_index.",
     )
     parser.add_argument(
         "--interactive",

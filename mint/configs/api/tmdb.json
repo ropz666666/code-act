@@ -1,6 +1,6 @@
 {
   "feedback_config": {
-    "pseudo_human_feedback": "GT",
+    "pseudo_human_feedback": "no_GT",
     "feedback_form": "binary",
     "feedback_agent_config": {
       "agent_class": "OpenAIFeedbackAgent",
@@ -12,17 +12,15 @@
   },
   "env_config": {
     "use_tools": true,
-    "max_steps": 10,
-    "max_propose_solution": 5,
+    "max_steps": 6,
+    "max_propose_solution": 3,
     "count_down": true
   },
   "task": {
     "task_class": "APISpecTaskTMDB",
     "filepath": "./experiment/datasets/tmdb.json",
     "tool_imports": [["mint.tools.apispec_tool", "TMDBAPITool"]],
-    "extra_load_task_kwargs": {
-      "limit": 50
-    }
+    "extra_load_task_kwargs": {}
   },
   "agent": {
     "agent_class": "OpenAILMAgent",

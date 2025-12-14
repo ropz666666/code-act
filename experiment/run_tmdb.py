@@ -175,7 +175,7 @@ def main():
     p.add_argument("--config", default="./config.yaml")
     p.add_argument("--out", default="./experiment/result/tmdb.csv")
     p.add_argument("--limit", type=int, default=10)
-    p.add_argument("--model", default="gpt-3.5-turbo-0613")
+    p.add_argument("--model", default="gpt-4o")
     args = p.parse_args()
     run(args.dataset, args.spec, args.config, args.out, args.limit, args.model)
 
